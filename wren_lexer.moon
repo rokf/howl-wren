@@ -1,14 +1,19 @@
 howl.util.lpeg_lexer ->
   c = capture
 
-
   keyword = c 'keyword', word {
     'break','class','construct','else','for','foreign','if',
     'import','in','is','return',
     'static','super','this','var','while'
   }
 
-  comment = c 'comment', '//' * scan_until(eol)
+  comment_span = (start_pat, end_pat) ->
+    start_pat * ((V'nested_comment' + P 1) - end_pat)^0 * (end_pat + P(-1))
+
+  comment = c 'comment', any {
+     '//' * scan_until(eol),
+     P { 'nested_comment', nested_comment: comment_span('/*','*/') }
+  }
 
   string = c 'string', span('"', '"', P'\\')
 
